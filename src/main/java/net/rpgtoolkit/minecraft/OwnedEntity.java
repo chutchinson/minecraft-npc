@@ -10,6 +10,7 @@ import org.bukkit.entity.LivingEntity;
 import de.ntcomputer.minecraft.controllablemobs.api.ControllableMob;
 import de.ntcomputer.minecraft.controllablemobs.api.ControllableMobs;
 import de.ntcomputer.minecraft.controllablemobs.api.ai.behaviors.AILookAtEntity;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Ageable;
 
 public class OwnedEntity<T extends LivingEntity> {
@@ -106,7 +107,7 @@ public class OwnedEntity<T extends LivingEntity> {
                 // this.entity.setProfession(Profession.PRIEST);
                 this.selected = true;
                 if (player != null) {
-                    player.sendMessage("Selected " + this.getDisplayName());
+                    player.sendMessage(ChatColor.YELLOW + "Selected " + this.getDisplayName());
                     player.setMetadata("npc.selected", 
                                     new FixedMetadataValue(NpcPlugin.INSTANCE, this.id));
                 }
@@ -116,7 +117,7 @@ public class OwnedEntity<T extends LivingEntity> {
                 this.selected = false;
                 if (player != null) {
                     player.removeMetadata("npc.selected", NpcPlugin.INSTANCE);
-                    player.sendMessage("Deselected " + this.getDisplayName());
+                    player.sendMessage(ChatColor.YELLOW + "Deselected " + this.getDisplayName());
                 }
             }
             

@@ -1,0 +1,24 @@
+name: tkzNPC
+main: net.rpgtoolkit.minecraft.NpcPlugin
+version: 1.2.1
+database: true
+depend: [ControllableMobsAPI, Lockette]
+commands:
+    npc:
+      description: NPC control commands.
+      usage: <command> <arguments>
+      permission: tkzNPC.npc.*
+      permission-message: You don't have permission to control NPCs.
+permissions:
+    npc.*:
+        description: Gives access to all NPC commands
+        children:
+            npc.infinite: true
+            npc.kill: true
+    npc.kill:
+        description: Allows player to kill the selected owned entity.
+        default: true
+    npc.infinite:
+        description: Allows player to set an infinite inventory on a selected and owned NPC
+        default: op
+ 
