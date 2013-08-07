@@ -4,11 +4,13 @@
  */
 package net.rpgtoolkit.minecraft;
 
+import net.rpgtoolkit.minecraft.roles.ShopkeeperRole;
 import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.entity.Creeper;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
 
 /**
  *
@@ -16,24 +18,65 @@ import org.bukkit.entity.Player;
  */
 public class OwnedEntityFactory {
     
-    public OwnedEntity<?> create(Player owner, EntityType entityType) {
+    private OwnedEntityRepository repository;
+    
+    public OwnedEntityFactory(OwnedEntityRepository repository) {
+        this.repository = repository;
+    }
+    
+    public OwnedEntity<?> spawn(Player owner, Location location, String name) {
+        
+        LivingEntity entity = 
+                (LivingEntity) owner.getWorld().spawnEntity(location, EntityType.VILLAGER);
+        
+        if (entity != null) {
+            OwnedEntity<?> ownedEntity = OwnedEntityFactory.attach(
+                    owner.getName(), entity);
+            if (ownedEntity != null) {
+                this.repository.add(ownedEntity);
+            }
+            return ownedEntity;
+        }
         
         return null;
         
     }
     
-    private static boolean validate(EntityType type) {
-        switch (type) {
-            case CREEPER:
-                return true;
+    public static OwnedEntity<?> attach(String owner, LivingEntity entity) {
+        
+        if (!OwnedEntityFactory.validate(entity.getType())) {
+            return null;
         }
-        return false;
+        
+        OwnedEntity<?> result = null;
+        
+        switch (entity.getType()) {
+            case VILLAGER:
+                result = new OwnedEntity<Villager>(entity, owner);
+                break;
+            case CREEPER:
+                result = new OwnedEntity<Creeper>(entity, owner);
+                break;
+        }
+        
+        if (result != null) {
+            result.setRole(new ShopkeeperRole(result));
+        }
+        
+        return result;
+        
     }
     
-    private static LivingEntity spawn(EntityType type, World world, Location location) {
-
-        return (LivingEntity) world.spawnEntity(location, type);
-        
+    private static boolean validate(EntityType type) {
+        switch (type) {
+            case VILLAGER:
+            case CREEPER:
+            case ZOMBIE:
+            case SKELETON:
+                return true;
+            default:
+                return false;
+        }
     }
     
 }

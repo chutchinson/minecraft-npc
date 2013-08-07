@@ -1,8 +1,5 @@
 package net.rpgtoolkit.minecraft.roles;
 
-import java.util.Map;
-import java.util.WeakHashMap;
-
 import net.rpgtoolkit.minecraft.NpcPlugin;
 import net.rpgtoolkit.minecraft.OwnedEntity;
 import net.rpgtoolkit.minecraft.OwnedEntityRole;
@@ -31,12 +28,10 @@ import org.yi.acru.bukkit.Lockette.Lockette;
 
 public class ShopkeeperRole extends OwnedEntityRole {
 
-    private Map<Player, Long> events;
     protected OwnedEntityShop shop;
 
     public ShopkeeperRole(OwnedEntity owner) {
-            super(owner, Profession.LIBRARIAN, "Shopkeeper");
-            this.events = new WeakHashMap<>();
+            super(owner, "Shopkeeper");
     }
 
     public OwnedEntityShop getShop() {

@@ -2,6 +2,7 @@ package net.rpgtoolkit.minecraft.roles;
 
 import net.rpgtoolkit.minecraft.OwnedEntity;
 import net.rpgtoolkit.minecraft.OwnedEntityRole;
+
 import org.bukkit.entity.Villager.Profession;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -13,7 +14,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 public class CompanionRole extends OwnedEntityRole {
 
 	public CompanionRole(OwnedEntity owner) {
-		super(owner, Profession.LIBRARIAN, "Companion");
+		super(owner, "Companion");
 	}
 
 	@Override

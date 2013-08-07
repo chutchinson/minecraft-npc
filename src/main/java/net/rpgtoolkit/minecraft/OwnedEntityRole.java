@@ -4,15 +4,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import net.rpgtoolkit.minecraft.items.OwnedEntityItemFactory;
+
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Villager;
-import org.bukkit.entity.Villager.Profession;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -25,26 +26,20 @@ import org.bukkit.inventory.meta.ItemMeta;
 public abstract class OwnedEntityRole {
 
 	protected OwnedEntity entity;
-	protected Profession profession;
 	protected String title;
 	protected Map<String, String> metadata;
         protected List<Player> playersInteracting;
 	protected boolean dirty;
 	
-	public OwnedEntityRole(OwnedEntity owner, Profession profession, String title) {
-		if (owner == null || profession == null) {
+	public OwnedEntityRole(OwnedEntity owner, String title) {
+		if (owner == null) {
 			throw new NullPointerException();
 		}
 		this.entity = owner;
-		this.profession = profession;
 		this.title = title;
 		this.metadata = new HashMap<>();
                 this.playersInteracting = new ArrayList<>();
 		this.dirty = false;
-	}
-	
-	public Profession getProfession() {
-		return this.profession;
 	}
 	
 	public String getTitle() {
@@ -92,7 +87,7 @@ public abstract class OwnedEntityRole {
 		if (player.getItemInHand().getTypeId() == Material.BLAZE_ROD.getId()) {
 			
                     if (player.getName().equals(this.entity.getOwner()) || player.isOp()) {
-                        this.entity.update((Villager) event.getEntity());
+                        this.entity.update((LivingEntity) event.getEntity());
                         this.entity.select(player, !this.entity.selected());
                     }
                     else {
@@ -110,6 +105,9 @@ public abstract class OwnedEntityRole {
                 
                 final Player player = event.getPlayer();
                 
+                // Remove entity from the world and transform back into
+                // a potion.
+                
                 if (player != null && player.getItemInHand().getTypeId() == Material.BLAZE_ROD.getId()) {
                     if (this.entity.selected() && this.entity.getOwner().equals(player.getName())) {
                         
@@ -126,7 +124,7 @@ public abstract class OwnedEntityRole {
                         ItemStack item = factory.getItem();
                         ItemMeta meta = item.getItemMeta();
 
-                        meta.setDisplayName(this.entity.getDisplayName());
+                        meta.setDisplayName(this.entity.getName());
                         item.setItemMeta(meta);
 
                         player.getWorld().createExplosion(player.getLocation(), 0f);
