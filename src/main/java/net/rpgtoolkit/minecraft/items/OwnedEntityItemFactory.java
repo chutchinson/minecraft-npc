@@ -7,6 +7,7 @@ import net.rpgtoolkit.minecraft.OwnedEntityRepository;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
@@ -33,13 +34,13 @@ public final class OwnedEntityItemFactory {
             
 	}
 	
-	public ItemStack getItem() {
+	public ItemStack getItem(EntityType entityType) {
 	
             ItemStack item = new ItemStack(this.material, 1, (short) 16384);
             ItemMeta meta = 
                             Bukkit.getServer().getItemFactory().getItemMeta(this.material);
 
-            meta.setLore(Arrays.asList(this.lore));
+            meta.setLore(Arrays.asList(this.lore, entityType.getName()));
             meta.setDisplayName(this.name);
 
             item.setItemMeta(meta);
@@ -48,13 +49,31 @@ public final class OwnedEntityItemFactory {
 		
 	}
 	
-	public Recipe getRecipe() {
+	public Recipe getRecipe(EntityType entityType) {
             
-		ShapedRecipe recipe = new ShapedRecipe(this.getItem());
-                
+		ShapedRecipe recipe = new ShapedRecipe(this.getItem(entityType));
+
 		recipe.shape("fbf", "ece", "ada");
 		recipe.setIngredient('a', Material.CHEST);
-		recipe.setIngredient('b', new MaterialData(Material.SKULL_ITEM, (byte) 0));
+                
+                switch (entityType) {
+                    case SKELETON:
+                        recipe.setIngredient('b', 
+                                new MaterialData(Material.SKULL_ITEM, (byte) 0));
+                        break;
+                    case VILLAGER:
+                        recipe.setIngredient('b', 
+                                new MaterialData(Material.SKULL_ITEM, (byte) 3));
+                        break;
+                    case CREEPER:
+                        recipe.setIngredient('b', 
+                                new MaterialData(Material.SKULL_ITEM, (byte) 4));
+                        break;
+                    case IRON_GOLEM:
+                        recipe.setIngredient('b', Material.IRON_BLOCK);
+                        break;
+                }
+                
                 recipe.setIngredient('c', Material.LEATHER_CHESTPLATE);
                 recipe.setIngredient('d', Material.LEATHER_LEGGINGS);
                 recipe.setIngredient('e', Material.BONE);

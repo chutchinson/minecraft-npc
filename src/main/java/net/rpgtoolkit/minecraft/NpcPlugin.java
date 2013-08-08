@@ -15,11 +15,12 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
@@ -32,6 +33,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -105,7 +107,7 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
                 if (!this.creatorItemFactory.isItemValid(item)) {
                     player.sendMessage(ChatColor.RED + "You must name your companion!");
                     player.getWorld().dropItem(event.getEntity().getLocation(),
-                            this.creatorItemFactory.getItem());
+                            item.clone());
                     return;
                 }
 
@@ -113,9 +115,8 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
                 loc.setY(loc.getY() + 1);
 
                 final ItemMeta meta = item.getItemMeta();
-                final String itemName = meta.getDisplayName().trim();
                 final OwnedEntity entity =
-                        this.factory.spawn(player, loc, itemName);
+                        this.factory.spawn(player, loc, meta);
 
                 if (entity != null) {
                     player.sendMessage(
@@ -129,52 +130,78 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
     }
 
     @EventHandler
+    public void onEntityCombust(EntityCombustEvent event) {
+    
+        // Prevent owned entities from combusting.
+        
+        OwnedEntity entity = this.repository.get(
+                event.getEntity().getUniqueId().toString());
+        
+        if (entity != null) {
+            event.setCancelled(true);
+        }
+        
+    }
+    
+    @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
 
         final Entity entity = event.getEntity();
 
-        // Ensure entity is removed from the 
-        // repository
+        // Ensure entity entities
 
-        if (entity.getType() == EntityType.VILLAGER) {
+        String key = entity.getUniqueId().toString();
+        OwnedEntity ownedEntity = this.repository.get(key);
 
-            String key = entity.getUniqueId().toString();
-            OwnedEntity villager = this.repository.get(key);
+        if (ownedEntity != null) {
 
-            if (villager != null) {
-                villager.getRole().dead(event);
-                this.getServer().broadcastMessage(ChatColor.RED + String.format("%s %s",
-                        villager.getName(), getCauseOfDeath(entity)));
-                this.repository.remove(key);
-            }
+            // Relay death to the companion's role so it can perform
+            // any special tasks.
+            
+            ownedEntity.getRole().dead(event);
+            
+            // Notify server that a companion has died and remove the companion
+            // from the repository.
+            
+            this.getServer().broadcastMessage(ChatColor.RED + String.format("%s %s",
+                    ownedEntity.getName(), getCauseOfDeath(entity)));
+            
+            this.repository.remove(key);
+            
+            // Ensure player selection is reset.
 
-        }
-
-        // Ensure selection is reset if their selected entity
-        // has died.
-
-        for (Player player : this.getServer().getOnlinePlayers()) {
-            if (player.hasMetadata(OwnedEntityMetadata.SELECTED)) {
-                if (player.getMetadata(OwnedEntityMetadata.SELECTED).get(0).asString().equals(
-                        entity.getUniqueId().toString())) {
-                    player.removeMetadata(OwnedEntityMetadata.SELECTED, this);
+            for (Player player : this.getServer().getOnlinePlayers()) {
+                if (player.hasMetadata(OwnedEntityMetadata.SELECTED)) {
+                    if (player.getMetadata(OwnedEntityMetadata.SELECTED).get(0).asString().equals(
+                            entity.getUniqueId().toString())) {
+                        player.removeMetadata(OwnedEntityMetadata.SELECTED, this);
+                    }
                 }
             }
         }
 
+    }
+    
+    @EventHandler
+    public void onEntityDamaged(EntityDamageEvent event) {
+        
+        
     }
 
     @EventHandler
     public void onAttack(EntityDamageByEntityEvent event) {
 
         if (event.getDamager() instanceof Player) {
-            if (event.getEntity() instanceof Villager) {
-                OwnedEntity villager =
-                        this.repository.get(event.getEntity().getUniqueId().toString());
-                if (villager != null) {
-                    villager.getRole().attack(event);
-                    if (villager.getRole().dirty()) {
-                        this.repository.update(villager);
+            if (event.getEntity() instanceof LivingEntity) {
+                OwnedEntity entity = this.repository.get(
+                        event.getEntity().getUniqueId().toString());
+                if (entity != null) {
+                    entity.getRole().attack(event);
+                    
+                    // TODO: Move out of plugin.
+                    
+                    if (entity.getRole().dirty()) {
+                        this.repository.update(entity);
                     }
                 }
             }
@@ -185,10 +212,14 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerCloseInventory(InventoryCloseEvent event) {
 
+        // Relay inventory close event to all entities
+        // that are currently interacting with a player.
+        
         Player player = (Player) event.getPlayer();
-        for (OwnedEntity villager : this.repository.all()) {
-            if (villager.getRole().interacting(player)) {
-                villager.getRole().closeInventory(event);
+        
+        for (OwnedEntity entity : this.repository.all()) {
+            if (entity.getRole().interacting(player)) {
+                entity.getRole().closeInventory(event);
                 break;
             }
         }
@@ -198,8 +229,8 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerInteractInventory(InventoryClickEvent event) {
 
-        for (OwnedEntity villager : this.repository.all()) {
-            villager.getRole().iteractWithInventory(event);
+        for (OwnedEntity entity : this.repository.all()) {
+            entity.getRole().iteractWithInventory(event);
         }
 
     }
@@ -207,14 +238,13 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
 
-        if (event.getRightClicked() instanceof Villager) {
-            OwnedEntity owned = this.repository.get(
-                    event.getRightClicked().getUniqueId().toString());
-            if (owned != null) {
-                owned.getRole().interact(event);
-                if (owned.getRole().dirty()) {
-                    this.repository.update(owned);
-                }
+        OwnedEntity entity = this.repository.get(
+                event.getRightClicked().getUniqueId().toString());
+        
+        if (entity != null) {
+            entity.getRole().interact(event);
+            if (entity.getRole().dirty()) {
+                this.repository.update(entity);
             }
         }
 
@@ -235,15 +265,17 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
             if (player.hasMetadata(OwnedEntityMetadata.SELECTED)) {
                 List<MetadataValue> selected = player.getMetadata(OwnedEntityMetadata.SELECTED);
 
-                OwnedEntity villager = this.repository.get(selected.get(0).asString());
-                if (villager != null) {
-                    villager.getRole().interactWithBlock(event);
-                    if (villager.getRole().dirty()) {
-                        this.repository.update(villager);
+                OwnedEntity entity = this.repository.get(selected.get(0).asString());
+                if (entity != null) {
+                    entity.getRole().interactWithBlock(event);
+                    
+                    // TODO: Move out of plugin.
+                    
+                    if (entity.getRole().dirty()) {
+                        this.repository.update(entity);
                     }
                 }
             }
-
 
         }
 
@@ -263,15 +295,21 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
 
     private void setup() {
 
-        // Create owned NPC repository and create the items and recipes
+        // Create entity NPC repository and create the items and recipes
         // necessary to control them.
 
         this.repository = new OwnedEntityRepository(this);
         this.factory = new OwnedEntityFactory(this.repository);
         this.creatorItemFactory = new OwnedEntityItemFactory(this.repository);
 
-        this.getServer().addRecipe(
-                this.creatorItemFactory.getRecipe());
+        // Register companion recipes.
+
+        for (EntityType entityType : OwnedEntityFactory.getValidEntityTypes()) {
+            final Recipe recipe = this.creatorItemFactory.getRecipe(entityType);
+            if (recipe != null) {
+                this.getServer().addRecipe(recipe);
+            }
+        }
 
         // Simple check to ensure database exists, and if not
         // creates the database(s) necessary.

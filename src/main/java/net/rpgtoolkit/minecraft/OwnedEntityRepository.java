@@ -19,7 +19,6 @@ import org.bukkit.entity.Villager;
 import org.bukkit.plugin.Plugin;
 
 import com.avaje.ebean.EbeanServer;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.LivingEntity;
 
 public class OwnedEntityRepository {
@@ -89,13 +88,13 @@ public class OwnedEntityRepository {
 
                 if (metadata.size() > 0) {
 
-                    // Delete all existing metadata for the current role
+                    // Delete all existing metadata for the current role.
 
                     this.database.delete(this.database.find(OwnedEntityMetadataRecord.class).where()
                             .eq("reference", entity.getId())
                             .eq("role", entity.getRole().getTitle()).findList());
 
-                    // Add updated / new metadata
+                    // Add updated / new metadata.
 
                     for (String key : metadata.keySet()) {
 

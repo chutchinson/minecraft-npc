@@ -12,6 +12,7 @@ import org.bukkit.GameMode;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -121,7 +122,8 @@ public abstract class OwnedEntityRole {
                         OwnedEntityItemFactory factory = new OwnedEntityItemFactory(
                                 NpcPlugin.INSTANCE.getRepository());
 
-                        ItemStack item = factory.getItem();
+                        ItemStack item = 
+                                factory.getItem(this.entity.getEntity().getType());
                         ItemMeta meta = item.getItemMeta();
 
                         meta.setDisplayName(this.entity.getName());
