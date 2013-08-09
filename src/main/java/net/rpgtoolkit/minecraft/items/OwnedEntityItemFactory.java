@@ -69,8 +69,18 @@ public final class OwnedEntityItemFactory {
                         recipe.setIngredient('b', 
                                 new MaterialData(Material.SKULL_ITEM, (byte) 4));
                         break;
+                    case ZOMBIE:
+                        recipe.setIngredient('b',
+                                new MaterialData(Material.SKULL_ITEM, (byte) 2));
+                        break;
                     case IRON_GOLEM:
                         recipe.setIngredient('b', Material.IRON_BLOCK);
+                        break;
+                    case WITCH:
+                        recipe.setIngredient('b', Material.CAULDRON_ITEM);
+                        break;
+                    case SNOWMAN:
+                        recipe.setIngredient('b', Material.SNOW_BALL);
                         break;
                 }
                 

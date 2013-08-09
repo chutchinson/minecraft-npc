@@ -128,7 +128,7 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
         }
 
     }
-
+    
     @EventHandler
     public void onEntityCombust(EntityCombustEvent event) {
     
@@ -154,6 +154,11 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
         OwnedEntity ownedEntity = this.repository.get(key);
 
         if (ownedEntity != null) {
+            
+            // Ensure owned entities drop no experience or loot.
+            
+            event.setDroppedExp(0);
+            event.getDrops().clear();
 
             // Relay death to the companion's role so it can perform
             // any special tasks.
@@ -185,6 +190,19 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onEntityDamaged(EntityDamageEvent event) {
         
+        OwnedEntity entity = this.repository.get(
+                event.getEntity().getUniqueId().toString());
+        
+        // Prevent owned entities from being damaged by certain events
+        // and circumstances.
+        
+        if (entity != null) {
+            switch (event.getCause()) {
+                case MELTING:
+                    event.setCancelled(true);
+                    break;
+            }
+        }
         
     }
 

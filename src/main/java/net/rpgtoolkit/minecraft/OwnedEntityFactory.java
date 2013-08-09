@@ -10,14 +10,16 @@ import java.util.Collection;
 import net.rpgtoolkit.minecraft.roles.ShopkeeperRole;
 
 import org.bukkit.Location;
-import org.bukkit.entity.Blaze;
+import org.bukkit.World;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.IronGolem;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Skeleton;
+import org.bukkit.entity.Snowman;
 import org.bukkit.entity.Villager;
+import org.bukkit.entity.Witch;
 import org.bukkit.entity.Zombie;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -34,7 +36,8 @@ public class OwnedEntityFactory {
                 EntityType.ZOMBIE,
                 EntityType.SKELETON,
                 EntityType.IRON_GOLEM,
-                EntityType.BLAZE
+                EntityType.SNOWMAN,
+                EntityType.WITCH
             });
     
     private OwnedEntityRepository repository;
@@ -45,6 +48,8 @@ public class OwnedEntityFactory {
     
     public OwnedEntity<?> spawn(Player owner, Location location, ItemMeta meta) {
         
+        final World world = owner.getWorld();
+        
         String name = meta.getDisplayName().trim();
         String itemEntityType = meta.getLore().get(1);
      
@@ -52,11 +57,15 @@ public class OwnedEntityFactory {
         // item meta data.
         
         EntityType entityType = EntityType.fromName(itemEntityType);
+                
+        // Spawn effects.
         
+        world.createExplosion(location, 0f);
+
         // Spawn a new entity based on the item details.
         
         LivingEntity entity = 
-                (LivingEntity) owner.getWorld().spawnEntity(location, entityType);
+                (LivingEntity) world.spawnEntity(location, entityType);
         
         if (entity != null) {
             OwnedEntity<?> ownedEntity = OwnedEntityFactory.attach(
@@ -100,6 +109,12 @@ public class OwnedEntityFactory {
                 break;
             case IRON_GOLEM:
                 result = new OwnedEntity<IronGolem>(entity, owner);
+                break;
+            case SNOWMAN:
+                result = new OwnedEntity<Snowman>(entity, owner);
+                break;
+            case WITCH:
+                result = new OwnedEntity<Witch>(entity, owner);
                 break;
         }
         

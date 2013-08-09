@@ -39,14 +39,14 @@ public class OwnedEntityRepository {
         return this.npcs.values();
     }
 
-    public void add(OwnedEntity villager) {
-        if (villager != null) {
-            this.npcs.put(villager.getId(), villager);
+    public void add(OwnedEntity entity) {
+        if (entity != null) {
+            this.npcs.put(entity.getId(), entity);
 
-            OwnedEntityRecord entity = new OwnedEntityRecord(villager);
+            OwnedEntityRecord record = new OwnedEntityRecord(entity);
 
-            this.records.put(villager.getId(), entity);
-            this.database.save(entity);
+            this.records.put(entity.getId(), record);
+            this.database.save(record);
         }
     }
 
@@ -75,8 +75,7 @@ public class OwnedEntityRepository {
     public void update(OwnedEntity entity) {
 
         try {
-            OwnedEntityRecord record = this.records.get(
-                    entity.getId());
+            OwnedEntityRecord record = this.records.get(entity.getId());
 
             if (record != null) {
                 record.setName(entity.getName());
@@ -137,8 +136,8 @@ public class OwnedEntityRepository {
     public void bind(Chunk chunk) {
         if (chunk != null) {
             for (Entity entity : chunk.getEntities()) {
-                if (entity.getType() == EntityType.VILLAGER) {
-                    this.bind(entity.getUniqueId().toString(), (Villager) entity);
+                if (entity instanceof LivingEntity) {
+                    this.bind(entity.getUniqueId().toString(), (LivingEntity) entity);
                 }
             }
         }
@@ -174,7 +173,7 @@ public class OwnedEntityRepository {
     public void unbind(Chunk chunk) {
         if (chunk != null) {
             for (Entity entity : chunk.getEntities()) {
-                if (entity.getType() == EntityType.VILLAGER) {
+                if (entity instanceof LivingEntity) {
                     this.unbind(entity.getUniqueId().toString());
                 }
             }

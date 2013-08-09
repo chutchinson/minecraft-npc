@@ -77,7 +77,6 @@ public class OwnedEntity<T extends LivingEntity> {
             this.selected = true;
             this.entity.setCustomName(ChatColor.LIGHT_PURPLE + this.getName());
             if (player != null) {
-                player.sendMessage(ChatColor.YELLOW + "Selected " + this.getName());
                 player.setMetadata("npc.selected",
                         new FixedMetadataValue(NpcPlugin.INSTANCE, this.id));
             }
@@ -86,7 +85,6 @@ public class OwnedEntity<T extends LivingEntity> {
             this.entity.setCustomName(this.getName());
             if (player != null) {
                 player.removeMetadata("npc.selected", NpcPlugin.INSTANCE);
-                player.sendMessage(ChatColor.YELLOW + "Deselected " + this.getName());
             }
         }
 

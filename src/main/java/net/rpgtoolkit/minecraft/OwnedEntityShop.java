@@ -87,7 +87,7 @@ public class OwnedEntityShop {
             final ItemStack price = this.getPurchasePrice(item);
             
             if (price != null) {                
-                return String.format("%s %s(s)", 
+                return String.format("Buy for %s %s(s)", 
                         price.getAmount(), Items.itemByStack(price).getName());
             }
             
