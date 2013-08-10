@@ -14,8 +14,6 @@ import net.rpgtoolkit.minecraft.persistence.OwnedEntityMetadataRecord;
 
 import org.bukkit.Chunk;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Villager;
 import org.bukkit.plugin.Plugin;
 
 import com.avaje.ebean.EbeanServer;

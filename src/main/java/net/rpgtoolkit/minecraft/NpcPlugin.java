@@ -318,7 +318,7 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
 
         this.repository = new OwnedEntityRepository(this);
         this.factory = new OwnedEntityFactory(this.repository);
-        this.creatorItemFactory = new OwnedEntityItemFactory(this.repository);
+        this.creatorItemFactory = new OwnedEntityItemFactory();
 
         // Register companion recipes.
 

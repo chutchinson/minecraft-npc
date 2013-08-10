@@ -23,14 +23,12 @@ public final class OwnedEntityItemFactory {
 	private String name;
 	private String lore;
 	private Material material;
-	private OwnedEntityRepository repository;
 	
-	public OwnedEntityItemFactory(OwnedEntityRepository repository) {
+	public OwnedEntityItemFactory() {
             
             this.name = DEFAULT_NAME;
             this.lore = DEFAULT_LORE;
             this.material = DEFAULT_MATERIAL;
-            this.repository = repository;
             
 	}
 	
@@ -79,7 +77,7 @@ public final class OwnedEntityItemFactory {
                         recipe.setIngredient('b', Material.CAULDRON_ITEM);
                         break;
                     case SNOWMAN:
-                        recipe.setIngredient('b', Material.SNOW_BALL);
+                        recipe.setIngredient('b', Material.JACK_O_LANTERN);
                         break;
                 }
                 
@@ -95,13 +93,13 @@ public final class OwnedEntityItemFactory {
 	
 	public boolean isItemValid(ItemStack item) {
             
-		String name = (item.hasItemMeta() ? item.getItemMeta().getDisplayName() : null);
+		String itemName = (item.hasItemMeta() ? item.getItemMeta().getDisplayName() : null);
                 
-		if (name == null)
+		if (itemName == null)
 			return false;
-		if (name.trim().length() == 0)
+		if (itemName.trim().length() == 0)
 			return false;
-                if (name.equalsIgnoreCase(this.name))
+                if (itemName.equalsIgnoreCase(this.name))
                     return false;
                 
 		return true;

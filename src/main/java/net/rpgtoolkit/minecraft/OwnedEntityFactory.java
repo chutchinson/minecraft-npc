@@ -6,21 +6,18 @@ package net.rpgtoolkit.minecraft;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Random;
 
 import net.rpgtoolkit.minecraft.roles.ShopkeeperRole;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Creeper;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.IronGolem;
+import static org.bukkit.entity.EntityType.VILLAGER;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Skeleton;
-import org.bukkit.entity.Snowman;
 import org.bukkit.entity.Villager;
-import org.bukkit.entity.Witch;
-import org.bukkit.entity.Zombie;
+import org.bukkit.entity.Villager.Profession;
 import org.bukkit.inventory.meta.ItemMeta;
 
 /**
@@ -68,12 +65,29 @@ public class OwnedEntityFactory {
                 (LivingEntity) world.spawnEntity(location, entityType);
         
         if (entity != null) {
+            
             OwnedEntity<?> ownedEntity = OwnedEntityFactory.attach(
                     owner.getName(), entity);
+            
             if (ownedEntity != null) {
+                
                 ownedEntity.setName(name);
+                
+                // Set various properties for entities based on the entity type.
+                // For example, pick a random profession for a villager.
+                
+                switch (entity.getType()) {
+                    case VILLAGER:
+                        ((Villager) entity).setProfession(getRandomProfession());
+                        break;
+                }
+                
+                // Add owned entity to the entity repository.
+
                 this.repository.add(ownedEntity);
+                
             }
+            
             return ownedEntity;
         }
         
@@ -92,44 +106,25 @@ public class OwnedEntityFactory {
         entity.setRemoveWhenFarAway(false);
         entity.setCanPickupItems(true);
         
-        OwnedEntity<?> result = null;
+        // Wrap owned entity around the created living entity.
         
-        switch (entity.getType()) {
-            case VILLAGER:
-                result = new OwnedEntity<Villager>(entity, owner);
-                break;
-            case CREEPER:
-                result = new OwnedEntity<Creeper>(entity, owner);
-                break;
-            case SKELETON:
-                result = new OwnedEntity<Skeleton>(entity, owner);
-                break;
-            case ZOMBIE:
-                result = new OwnedEntity<Zombie>(entity, owner);
-                break;
-            case IRON_GOLEM:
-                result = new OwnedEntity<IronGolem>(entity, owner);
-                break;
-            case SNOWMAN:
-                result = new OwnedEntity<Snowman>(entity, owner);
-                break;
-            case WITCH:
-                result = new OwnedEntity<Witch>(entity, owner);
-                break;
-        }
-        
-        if (result != null) {
-            result.setRole(new ShopkeeperRole(result));
-        }
-        
+        OwnedEntity<?> result = new OwnedEntity<>(entity, owner);
+        result.setRole(new ShopkeeperRole(result));
+
         return result;
         
     }
     
     public static Collection<EntityType> getValidEntityTypes() {
         
-      return validEntityTypes;
+        return validEntityTypes;
         
-    }    
+    }   
+    
+    private static Profession getRandomProfession() {
+        Random ran = new Random(System.currentTimeMillis());
+        return Profession.getProfession(ran.nextInt(
+                Profession.values().length));
+    }
     
 }
