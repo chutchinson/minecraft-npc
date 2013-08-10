@@ -7,6 +7,7 @@ import net.rpgtoolkit.minecraft.OwnedEntityRole;
 import net.rpgtoolkit.minecraft.OwnedEntityShop;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -27,68 +28,54 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.yi.acru.bukkit.Lockette.Lockette;
 
 public class ShopkeeperRole extends OwnedEntityRole {
-   
+
     private OwnedEntityShop shop;
     private Configuration config;
-    
+
     private enum ConfigurationEntry {
-        
+
         MESSAGE_WELCOME("npc.shop.msg.welcome"),
         MESSAGE_GOODBYE("npc.shop.msg.goodbye"),
         MESSAGE_PURCHASE("npc.shop.msg.purchase"),
         MESSAGE_OUTOFSTOCK("npc.shop.msg.outofstock"),
-        MESSAGE_TOOFAR("npc.shop.msg.toofar")
-        ;
+        MESSAGE_NOTAFFORDABLE("npc.shop.msg.notaffordable");
         
         private String key;
-        
+
         ConfigurationEntry(String key) {
             this.key = key;
         }
-        
+
         @Override
         public String toString() {
             return this.key;
         }
-        
     }
-    
+
     private final class Configuration {
-        
-        private static final String METADATA_MESSAGE_WELCOME = 
-                "npc.shop.msg.welcome";
-        private static final String METADATA_MESSAGE_GOODBYE =
-                "npc.shop.msg.goodbye";
-        private static final String METADATA_MESSAGE_PURCHASE =
-                "npc.shop.msg.purchase";
-        private static final String METADATA_MESSAGE_OUTOFSTOCK = 
-                "npc.shop.msg.outofstock";
-        private static final String METADATA_MESSAGE_TOOFAR = 
-                "npc.shop.msg.toofar";
-        
+
         private Map<String, String> metadata;
 
         public Configuration() {
             this.metadata = ShopkeeperRole.this.getMetadata();
         }
-        
+
         /**
-         * Retrieves and parses configuration from book metadata
-         * and applies it to the role's metadata for persistence
-         * and use within the role.
-         * 
+         * Retrieves and parses configuration from book metadata and applies it
+         * to the role's metadata for persistence and use within the role.
+         *
          * @param book book metadata
          */
         public void apply(BookMeta book) {
-            
+
             int pages = book.getPageCount();
             int page = 0;
-            
+
             // Maps each page of the book to a configuration entry
             // in the order the configuration entries are defined. If there
             // is not a page for the configuration entry then the entry
             // is removed so that the default value is used.
-            
+
             for (ConfigurationEntry entry : ConfigurationEntry.values()) {
                 page++;
                 String contents = null;
@@ -97,30 +84,26 @@ public class ShopkeeperRole extends OwnedEntityRole {
                 }
                 this.set(entry, contents);
             }
-            
+
         }
-        
-        private String get(Object key, String defaultValue) 
-        {
+
+        private String get(Object key, String defaultValue) {
             String entry = key.toString();
             if (this.metadata.containsKey(entry)) {
                 return this.metadata.get(entry);
-            }
-            else {
+            } else {
                 return defaultValue;
             }
         }
-        
+
         private void set(Object key, String value) {
             String entry = key.toString();
             if (value != null && value.trim().length() > 0) {
                 this.metadata.put(entry, value);
-            }
-            else {
+            } else {
                 this.metadata.remove(entry);
             }
         }
-
     }
 
     public ShopkeeperRole(OwnedEntity owner) {
@@ -137,16 +120,16 @@ public class ShopkeeperRole extends OwnedEntityRole {
 
     @Override
     protected void onAttack(EntityDamageByEntityEvent event) {
-     
+
         if (event.getDamager() instanceof Player) {
-            
+
             Player player = (Player) event.getDamager();
-            
+
             if (this.entity.isOwner(player)) {
                 final ItemStack item = player.getItemInHand();
 
-                if (item.getType() == Material.BOOK_AND_QUILL ||
-                    item.getType() == Material.WRITTEN_BOOK) {
+                if (item.getType() == Material.BOOK_AND_QUILL
+                        || item.getType() == Material.WRITTEN_BOOK) {
                     BookMeta meta = (BookMeta) player.getItemInHand().getItemMeta();
                     if (meta != null) {
                         this.config.apply(meta);
@@ -155,7 +138,7 @@ public class ShopkeeperRole extends OwnedEntityRole {
                 }
             }
         }
-        
+
     }
 
     @Override
@@ -209,14 +192,31 @@ public class ShopkeeperRole extends OwnedEntityRole {
 
         if (event.isShiftClick()) {
 
+            // Ensure player has room.
+
+            if (this.isInventoryFull(player.getInventory())) {
+                player.sendMessage(
+                        ChatColor.RED + "Your inventory is full!");
+                event.setCancelled(true);
+                return;
+            }
+
             // Purchase item and if successful notify the player
             // and allow player to grab item from the inventory.
 
+            // TODO: Consider returning the "purchase result"
+            // in order to supply better messages
+            
             if (shop.purchase(player, event.getRawSlot())) {
                 this.entity.say(player, this.config.get(
-                        Configuration.METADATA_MESSAGE_PURCHASE,
-                            "Thank you!"));
+                        ConfigurationEntry.MESSAGE_PURCHASE,
+                        "Thank you!"));
                 return;
+            }
+            else {
+                this.entity.say(player, ChatColor.RED + this.config.get(
+                        ConfigurationEntry.MESSAGE_NOTAFFORDABLE,
+                        "You cannot afford that."));
             }
 
         }
@@ -238,7 +238,7 @@ public class ShopkeeperRole extends OwnedEntityRole {
 
         // If player is already interacting with the shopkeeper
         // then cancel the request
-        
+
         if (this.interacting(player)) {
             return;
         }
@@ -253,36 +253,35 @@ public class ShopkeeperRole extends OwnedEntityRole {
 
             Chest stock = shop.getInventoryChest();
             if (stock != null && stock.getLocation().distance(player.getLocation()) > 16) {
-                this.entity.say(player, this.config.get(
-                        Configuration.METADATA_MESSAGE_TOOFAR,
-                            "Sorry, my shop is too far away."));
                 return;
             }
 
             // Check if there are items to vend or the profit chest is full
 
-            if ((shop.getProfitChest() != null && shop.isFull(shop.getProfitInventory(), null)) || !shop.hasStock()) {
+            if ((shop.getProfitChest() != null
+                    && this.isInventoryFull(shop.getProfitInventory()))
+                    || !shop.hasStock()) {
                 this.entity.say(player, this.config.get(
-                        Configuration.METADATA_MESSAGE_OUTOFSTOCK, 
-                            "Sorry, I am out of stock!"));
+                        ConfigurationEntry.MESSAGE_OUTOFSTOCK,
+                        "Sorry, I am out of stock!"));
                 return;
             }
 
             // Prepare for vending
-            
+
             shop.prepare();
-            
+
             // Start vending
-            
+
             this.startInteracting(player);
-            
+
             this.entity.say(player, this.config.get(
-                    Configuration.METADATA_MESSAGE_WELCOME,
-                        "Welcome! Use shift-click to buy!"));
-            
+                    ConfigurationEntry.MESSAGE_WELCOME,
+                    "Welcome! Use shift-click to buy."));
+
             player.openInventory(shop.getInventory());
-            
-        } 
+
+        }
 
     }
 
@@ -369,8 +368,8 @@ public class ShopkeeperRole extends OwnedEntityRole {
 
         if (this.interacting(player)) {
             this.entity.say(player, this.config.get(
-                    Configuration.METADATA_MESSAGE_GOODBYE, 
-                        "Thanks for shopping!"));
+                    ConfigurationEntry.MESSAGE_GOODBYE,
+                    "Thanks for shopping!"));
             this.stopInteracting(player);
         }
 
@@ -389,6 +388,10 @@ public class ShopkeeperRole extends OwnedEntityRole {
         shop.setProfitInventoryChest(this.getCurrentChest(
                 shop.getProfitChest()));
 
+    }
+
+    public boolean isInventoryFull(Inventory inventory) {
+        return inventory.firstEmpty() < 0;
     }
 
     private boolean isPlayerItem(Inventory inventory, int slot) {
