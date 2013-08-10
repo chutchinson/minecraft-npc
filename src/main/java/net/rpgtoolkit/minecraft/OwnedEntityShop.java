@@ -196,19 +196,11 @@ public class OwnedEntityShop {
             cloned.setDurability(item.getDurability());
             cloned.setItemMeta(item.getItemMeta());
             
-            // Ensure player has room.
-            
-            if (this.isFull(player.getInventory(), item)) {
-                this.owner.say(player, ChatColor.RED + "You don't have room for that item!");
-                return false;
-            }
-            
             // Ensure the item is for sale.
 
             final ItemShopInformation info = this.getItemInformation(item);
             
             if (!info.purchasable()) {
-                this.owner.say(player, ChatColor.RED + "That item is not for sale.");
                 return false;
             }
 
@@ -270,8 +262,6 @@ public class OwnedEntityShop {
 
                 return true;
             }
-
-            this.owner.say(player, ChatColor.RED + "You can't afford that.");
             
             return false;
 
@@ -413,25 +403,6 @@ public class OwnedEntityShop {
             }
             
             return true;
-            
-        }
-        
-        public boolean isFull(Inventory inventory, ItemStack itemToCheck) {
-            
-            return inventory.firstEmpty() < 0;
-            
-//            for (ItemStack item : inventory.getContents()) {
-//                if (item == null)
-//                    return false;
-//                else if (itemToCheck != null) {
-//                    if (item.getType() == itemToCheck.getType() &&
-//                            item.getAmount() != item.getMaxStackSize()) {
-//                        return false;
-//                    }
-//                }
-//            }
-//                
-//            return true;
             
         }
         
