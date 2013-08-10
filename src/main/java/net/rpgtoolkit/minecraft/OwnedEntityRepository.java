@@ -147,9 +147,13 @@ public class OwnedEntityRepository {
             
             OwnedEntityRecord record = this.records.get(key);
             OwnedEntity entity = OwnedEntityFactory.attach(
-                    record.getOwner(), npc);
+                    record.getOwner(), record.getRole(), npc);
             
             if (entity != null) {
+                
+                this.npcs.put(entity.getId(), entity);
+                
+                // Bind persisted data
                 
                 entity.setName(record.getName());
                 
@@ -160,9 +164,9 @@ public class OwnedEntityRepository {
                     entity.getRole().getMetadata().put(
                             metadata.getKey(), metadata.getValue());
                 }
-
-                this.npcs.put(entity.getId(), entity);
                 
+                entity.getRole().update();
+                                    
             }
         }
         
@@ -179,6 +183,10 @@ public class OwnedEntityRepository {
     }
 
     public void unbind(String key) {
+        OwnedEntity entity = this.npcs.get(key);
+        if (entity != null) {
+            this.update(entity);
+        }
         this.npcs.remove(key);
     }
 

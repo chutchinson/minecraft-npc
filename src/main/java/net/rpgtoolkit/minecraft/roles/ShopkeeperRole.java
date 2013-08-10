@@ -1,5 +1,6 @@
 package net.rpgtoolkit.minecraft.roles;
 
+import java.util.Map;
 import net.rpgtoolkit.minecraft.NpcPlugin;
 import net.rpgtoolkit.minecraft.OwnedEntity;
 import net.rpgtoolkit.minecraft.OwnedEntityRole;
@@ -21,28 +22,140 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
 
 import org.yi.acru.bukkit.Lockette.Lockette;
 
 public class ShopkeeperRole extends OwnedEntityRole {
+   
+    private OwnedEntityShop shop;
+    private Configuration config;
+    
+    private enum ConfigurationEntry {
+        
+        MESSAGE_WELCOME("npc.shop.msg.welcome"),
+        MESSAGE_GOODBYE("npc.shop.msg.goodbye"),
+        MESSAGE_PURCHASE("npc.shop.msg.purchase"),
+        MESSAGE_OUTOFSTOCK("npc.shop.msg.outofstock"),
+        MESSAGE_TOOFAR("npc.shop.msg.toofar")
+        ;
+        
+        private String key;
+        
+        ConfigurationEntry(String key) {
+            this.key = key;
+        }
+        
+        @Override
+        public String toString() {
+            return this.key;
+        }
+        
+    }
+    
+    private final class Configuration {
+        
+        private static final String METADATA_MESSAGE_WELCOME = 
+                "npc.shop.msg.welcome";
+        private static final String METADATA_MESSAGE_GOODBYE =
+                "npc.shop.msg.goodbye";
+        private static final String METADATA_MESSAGE_PURCHASE =
+                "npc.shop.msg.purchase";
+        private static final String METADATA_MESSAGE_OUTOFSTOCK = 
+                "npc.shop.msg.outofstock";
+        private static final String METADATA_MESSAGE_TOOFAR = 
+                "npc.shop.msg.toofar";
+        
+        private Map<String, String> metadata;
 
-    protected OwnedEntityShop shop;
+        public Configuration() {
+            this.metadata = ShopkeeperRole.this.getMetadata();
+        }
+        
+        /**
+         * Retrieves and parses configuration from book metadata
+         * and applies it to the role's metadata for persistence
+         * and use within the role.
+         * 
+         * @param book book metadata
+         */
+        public void apply(BookMeta book) {
+            
+            int pages = book.getPageCount();
+            int page = 0;
+            
+            // Maps each page of the book to a configuration entry
+            // in the order the configuration entries are defined. If there
+            // is not a page for the configuration entry then the entry
+            // is removed so that the default value is used.
+            
+            for (ConfigurationEntry entry : ConfigurationEntry.values()) {
+                page++;
+                String contents = null;
+                if (page <= pages) {
+                    contents = book.getPage(page);
+                }
+                this.set(entry, contents);
+            }
+            
+        }
+        
+        private String get(Object key, String defaultValue) 
+        {
+            String entry = key.toString();
+            if (this.metadata.containsKey(entry)) {
+                return this.metadata.get(entry);
+            }
+            else {
+                return defaultValue;
+            }
+        }
+        
+        private void set(Object key, String value) {
+            String entry = key.toString();
+            if (value != null && value.trim().length() > 0) {
+                this.metadata.put(entry, value);
+            }
+            else {
+                this.metadata.remove(entry);
+            }
+        }
+
+    }
 
     public ShopkeeperRole(OwnedEntity owner) {
-            super(owner, "Shopkeeper");
+        super(owner, "Shopkeeper");
+        this.config = new Configuration();
     }
 
     public OwnedEntityShop getShop() {
-            if (this.shop == null) {
-                    this.shop = new OwnedEntityShop(this.entity);
-            }
-            return this.shop;
+        if (this.shop == null) {
+            this.shop = new OwnedEntityShop(this.entity);
+        }
+        return this.shop;
     }
 
     @Override
     protected void onAttack(EntityDamageByEntityEvent event) {
+     
+        if (event.getDamager() instanceof Player) {
+            
+            Player player = (Player) event.getDamager();
+            
+            if (this.entity.isOwner(player)) {
+                final ItemStack item = player.getItemInHand();
 
-
+                if (item.getType() == Material.BOOK_AND_QUILL ||
+                    item.getType() == Material.WRITTEN_BOOK) {
+                    BookMeta meta = (BookMeta) player.getItemInHand().getItemMeta();
+                    if (meta != null) {
+                        this.config.apply(meta);
+                        this.entity.say(player, "I will now say the things in that book.");
+                    }
+                }
+            }
+        }
+        
     }
 
     @Override
@@ -50,14 +163,14 @@ public class ShopkeeperRole extends OwnedEntityRole {
 
         final ItemStack item = event.getCurrentItem();
         final Player player = (Player) event.getWhoClicked();
-        
+
         OwnedEntityShop shop = this.getShop();
-        
+
         // Remove pricing information if we're not performing
         // a shop transaction with the player, but we're within
         // their configured chest and moving items out of the
         // shop inventory.
-        
+
         if (!this.interacting(player)) {
             if (item != null && item.getType() != Material.AIR) {
                 if (shop != null && shop.isVending(player)) {
@@ -68,84 +181,93 @@ public class ShopkeeperRole extends OwnedEntityRole {
             }
             return;
         }
-        
+
         // NOTE: At this point we're within a shop transaction.
         // Do not accept any requests that are not an item move request.
-       
+
         if (event.getAction() != InventoryAction.MOVE_TO_OTHER_INVENTORY) {
             event.setCancelled(true);
             return;
         }
-   
+
         // If the player is interacting with their own
         // inventory then cancel the request.
-        
+
         if (this.isPlayerItem(event.getInventory(), event.getRawSlot())) {
             event.setCancelled(true);
             return;
         }
-        
+
         // If clicked an empty slot or no slot at all then cancel.
-        
+
         if (item == null || item.getType() == Material.AIR) {
             event.setCancelled(true);
             return;
         }
-        
+
         // Start shop interaction
-        
+
         if (event.isShiftClick()) {
 
             // Purchase item and if successful notify the player
             // and allow player to grab item from the inventory.
 
             if (shop.purchase(player, event.getRawSlot())) {
-                this.entity.say(player, "Thank you!");
+                this.entity.say(player, this.config.get(
+                        Configuration.METADATA_MESSAGE_PURCHASE,
+                            "Thank you!"));
                 return;
-            }  
+            }
 
         }
-        
+
         // Cancel the event because at this stage we've reached a point
         // where either the action is not valid or the shop issued
         // a notification to the player.
-        
+
         event.setCancelled(true);
-        
+
     }
 
     @Override
     protected void onInteraction(PlayerInteractEntityEvent event) {
 
         event.setCancelled(true);
-        
+
         final Player player = event.getPlayer();
 
+        // If player is already interacting with the shopkeeper
+        // then cancel the request
+        
         if (this.interacting(player)) {
             return;
         }
-        
+
         // Open the shop if it's configured
-        
+
         OwnedEntityShop shop = this.getShop();
-        
+
         if (shop.getInventory() != null && shop.getPricesInventory() != null) {
-            
+
             // Chest distance check
-        
+
             Chest stock = shop.getInventoryChest();
             if (stock != null && stock.getLocation().distance(player.getLocation()) > 16) {
-                this.entity.say(player, "My shop is too far away.");
+                this.entity.say(player, this.config.get(
+                        Configuration.METADATA_MESSAGE_TOOFAR,
+                            "Sorry, my shop is too far away."));
                 return;
             }
-            
+
             // Check if there are items to vend or the profit chest is full
-            
+
             if ((shop.getProfitChest() != null && shop.isFull(shop.getProfitInventory(), null)) || !shop.hasStock()) {
-                this.entity.say(player, "Sorry, I am out of stock.");
+                this.entity.say(player, this.config.get(
+                        Configuration.METADATA_MESSAGE_OUTOFSTOCK, 
+                            "Sorry, I am out of stock!"));
                 return;
             }
-            
+
             // Prepare for vending
             
             shop.prepare();
@@ -153,14 +275,14 @@ public class ShopkeeperRole extends OwnedEntityRole {
             // Start vending
             
             this.startInteracting(player);
-            this.entity.say(player, "Welcome! Use shift-click to buy.");
-
-            player.openInventory(shop.getInventory());  
-        }
-        else {
-            this.entity.say(event.getPlayer(), 
-                            "Sorry, I don't have a shop setup yet.");
-        }
+            
+            this.entity.say(player, this.config.get(
+                    Configuration.METADATA_MESSAGE_WELCOME,
+                        "Welcome! Use shift-click to buy!"));
+            
+            player.openInventory(shop.getInventory());
+            
+        } 
 
     }
 
@@ -168,12 +290,12 @@ public class ShopkeeperRole extends OwnedEntityRole {
     protected void onBlockInteraction(PlayerInteractEvent event) {
 
         Player player = event.getPlayer();
-        
+
         Block block = event.getClickedBlock();
         OwnedEntityShop shop = this.getShop();
 
         switch (block.getType()) {
-        case CHEST:
+            case CHEST:
                 Chest chest = (Chest) event.getClickedBlock().getState();
                 if (chest != null) {
 
@@ -185,65 +307,59 @@ public class ShopkeeperRole extends OwnedEntityRole {
                     }
 
                     // If the chest is any of the configured chests then unconfigure it.
-                    
+
                     if (chest.equals(shop.getInventoryChest())) {
                         shop.setInventoryChest(null);
                         this.entity.say(player, "I will stop using that chest for my shop inventory.");
                         return;
-                    }
-                    else if (chest.equals(shop.getPricesInventoryChest())) {
+                    } else if (chest.equals(shop.getPricesInventoryChest())) {
                         shop.setPricesInventoryChest(null);
                         this.entity.say(player, "I will stop using that chest for my shop pricing.");
                         return;
-                    }
-                    else if (chest.equals(shop.getProfitChest())) {
+                    } else if (chest.equals(shop.getProfitChest())) {
                         shop.setProfitInventoryChest(null);
                         this.entity.say(player, "I will stop using that chest for my profit.");
                         return;
                     }
-                    
+
                     // Configure one of the unconfigured chests.
 
                     if (shop.getInventoryChest() == null) {
                         shop.setInventoryChest(chest);
                         this.entity.say(player, "I will use that chest for my shop inventory.");
-                    }
-                    else if (shop.getPricesInventoryChest() == null) {
+                    } else if (shop.getPricesInventoryChest() == null) {
                         shop.setPricesInventoryChest(chest);
                         this.entity.say(player, "I will use that chest for my shop pricing.");
-                    }
-                    else if (shop.getProfitChest() == null) {
+                    } else if (shop.getProfitChest() == null) {
                         shop.setProfitInventoryChest(chest);
                         this.entity.say(player, "I will use that chest for my profit.");
                     }
 
                 }
                 break;
-        default:
+            default:
                 break;
         }
-        
+
 
     }
 
     @Override
     protected void onDeath(EntityDeathEvent event) {
-        
+
         this.shop = null;
-        
+
         // Close all open inventories.
-        
+
         for (final Player player : this.playersInteracting) {
             Bukkit.getScheduler().runTask(NpcPlugin.INSTANCE, new Runnable() {
-
                 @Override
-                public void run()  {
+                public void run() {
                     player.closeInventory();
                 }
-
             });
         }
-            
+
     }
 
     @Override
@@ -252,8 +368,10 @@ public class ShopkeeperRole extends OwnedEntityRole {
         Player player = (Player) event.getPlayer();
 
         if (this.interacting(player)) {
-                this.entity.say(player, "Thanks for shopping!");
-                this.stopInteracting(player);
+            this.entity.say(player, this.config.get(
+                    Configuration.METADATA_MESSAGE_GOODBYE, 
+                        "Thanks for shopping!"));
+            this.stopInteracting(player);
         }
 
     }
@@ -265,11 +383,11 @@ public class ShopkeeperRole extends OwnedEntityRole {
 
         shop.setOwner(this.entity);
         shop.setInventoryChest(this.getCurrentChest(
-            shop.getInventoryChest()));
+                shop.getInventoryChest()));
         shop.setPricesInventoryChest(this.getCurrentChest(
-            shop.getPricesInventoryChest()));
+                shop.getPricesInventoryChest()));
         shop.setProfitInventoryChest(this.getCurrentChest(
-            shop.getProfitChest()));
+                shop.getProfitChest()));
 
     }
 
@@ -282,16 +400,14 @@ public class ShopkeeperRole extends OwnedEntityRole {
 
     private Chest getCurrentChest(Chest chest) {
         if (chest != null) {
-                Block block = this.entity.getEntity().getWorld()
-                                .getBlockAt(chest.getLocation());
-                if (block.getType() == Material.CHEST) {
-                        return (Chest) block.getState();
-                }
-                else {
-                        return null;
-                }
+            Block block = this.entity.getEntity().getWorld()
+                    .getBlockAt(chest.getLocation());
+            if (block.getType() == Material.CHEST) {
+                return (Chest) block.getState();
+            } else {
+                return null;
+            }
         }
         return null;
     }
-
 }

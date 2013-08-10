@@ -13,7 +13,6 @@ import net.rpgtoolkit.minecraft.roles.ShopkeeperRole;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
-import static org.bukkit.entity.EntityType.VILLAGER;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
@@ -26,6 +25,8 @@ import org.bukkit.inventory.meta.ItemMeta;
  */
 public class OwnedEntityFactory {
     
+    private static final String defaultRole = "Shopkeeper";
+    
     private static final Collection<EntityType> validEntityTypes = 
             Arrays.asList(new EntityType[] {
                 EntityType.VILLAGER,
@@ -36,13 +37,7 @@ public class OwnedEntityFactory {
                 EntityType.SNOWMAN,
                 EntityType.WITCH
             });
-    
-    private OwnedEntityRepository repository;
-    
-    public OwnedEntityFactory(OwnedEntityRepository repository) {
-        this.repository = repository;
-    }
-    
+        
     public OwnedEntity<?> spawn(Player owner, Location location, ItemMeta meta) {
         
         final World world = owner.getWorld();
@@ -67,7 +62,7 @@ public class OwnedEntityFactory {
         if (entity != null) {
             
             OwnedEntity<?> ownedEntity = OwnedEntityFactory.attach(
-                    owner.getName(), entity);
+                    owner.getName(), defaultRole, entity);
             
             if (ownedEntity != null) {
                 
@@ -82,10 +77,6 @@ public class OwnedEntityFactory {
                         break;
                 }
                 
-                // Add owned entity to the entity repository.
-
-                this.repository.add(ownedEntity);
-                
             }
             
             return ownedEntity;
@@ -95,22 +86,22 @@ public class OwnedEntityFactory {
         
     }
     
-    public static OwnedEntity<?> attach(String owner, LivingEntity entity) {
+    public static OwnedEntity<?> attach(String owner, String role, LivingEntity entity) {
         
         if (!validEntityTypes.contains(entity.getType())) {
             return null;
         }
-        
-        // Set default properties for most living entities.
-        
-        entity.setRemoveWhenFarAway(false);
-        entity.setCanPickupItems(true);
-        
-        // Wrap owned entity around the created living entity.
+                
+        // Wrap owned entity around the created living entity
+        // and set the default role.
         
         OwnedEntity<?> result = new OwnedEntity<>(entity, owner);
-        result.setRole(new ShopkeeperRole(result));
-
+        
+        switch (role) {
+            case "Shopkeeper":
+                result.setRole(new ShopkeeperRole(result));
+        }
+        
         return result;
         
     }

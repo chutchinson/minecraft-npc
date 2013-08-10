@@ -42,7 +42,7 @@ public class SimpleMetadata<T> {
     }
     
     public void set(String key, String value) {
-        if (key != null) {
+        if (value != null) {
             this.metadata.setMetadata(key,
                     new FixedMetadataValue(this.plugin, value));
         }

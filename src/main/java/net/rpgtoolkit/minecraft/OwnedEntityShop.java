@@ -24,13 +24,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public class OwnedEntityShop {
-
+    
 	private OwnedEntity owner;
 	private Chest stockChest;
 	private Chest pricesChest;
         private Chest profitChest;
         private boolean isInventoryFinite;
-
+        
         private static final class ItemShopInformation {
             
             private ItemStack item;

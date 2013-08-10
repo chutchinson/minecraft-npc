@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 
 public class OwnedEntity<T extends LivingEntity> {
-    
+
     private String id;
     private String name;
     private String owner;
@@ -34,7 +34,7 @@ public class OwnedEntity<T extends LivingEntity> {
         this.id = entity.getUniqueId().toString();
         this.setOwner(owner);
 
-        this.update(entity);
+        this.bind(entity);
 
     }
 
@@ -64,35 +64,35 @@ public class OwnedEntity<T extends LivingEntity> {
             throw new NullPointerException();
         }
         this.role = role;
-        // this.entity.setProfession(this.role.getProfession());
     }
 
     public boolean selected() {
         return this.selected;
-        // return this.entity.getProfession() == Profession.PRIEST;
     }
 
     public void select(Player player, boolean value) {
 
+        OwnedEntityPlayerMetadata playerMetadata =
+                new OwnedEntityPlayerMetadata(player);
+        
         if (value) {
             this.selected = true;
             this.entity.setCustomName(ChatColor.LIGHT_PURPLE + this.getName());
-            if (player != null) {
-                player.setMetadata("npc.selected",
-                        new FixedMetadataValue(NpcPlugin.INSTANCE, this.id));
-            }
+            playerMetadata.setSelection(this.id);
         } else {
             this.selected = false;
             this.entity.setCustomName(this.getName());
-            if (player != null) {
-                player.removeMetadata("npc.selected", NpcPlugin.INSTANCE);
-            }
+            playerMetadata.setSelection(null);
         }
 
     }
 
     public final LivingEntity getEntity() {
         return this.entity;
+    }
+
+    public boolean isOwner(final Player player) {
+        return (player.isOp() || this.owner.equals(player.getName()));
     }
 
     public final String getOwner() {
@@ -155,9 +155,11 @@ public class OwnedEntity<T extends LivingEntity> {
 
     }
 
-    public final void update(LivingEntity entity) {
+    private void bind(LivingEntity entity) {
 
         this.entity = entity;
+        this.entity.setRemoveWhenFarAway(false);
+        this.entity.setCanPickupItems(true);
 
         if (this.entity instanceof Ageable) {
             ((Ageable) this.entity).setBreed(false);
