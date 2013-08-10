@@ -54,7 +54,6 @@ public final class OwnedEntityItemFactory {
 		ShapedRecipe recipe = new ShapedRecipe(this.getItem(entityType));
 
 		recipe.shape("fbf", "ece", "ada");
-		recipe.setIngredient('a', Material.CHEST);
                 
                 switch (entityType) {
                     case SKELETON:
@@ -84,6 +83,7 @@ public final class OwnedEntityItemFactory {
                         break;
                 }
                 
+                recipe.setIngredient('a', Material.CHEST);
                 recipe.setIngredient('c', Material.LEATHER_CHESTPLATE);
                 recipe.setIngredient('d', Material.LEATHER_LEGGINGS);
                 recipe.setIngredient('e', Material.BONE);

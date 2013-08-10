@@ -1,10 +1,12 @@
 package net.rpgtoolkit.minecraft;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.rpgtoolkit.minecraft.items.Items;
+import net.rpgtoolkit.minecraft.util.Pluralize;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -28,6 +30,57 @@ public class OwnedEntityShop {
 	private Chest pricesChest;
         private Chest profitChest;
         private boolean isInventoryFinite;
+
+        private static final class ItemShopInformation {
+            
+            private ItemStack item;
+            private ItemStack[] prices;
+            
+            public ItemShopInformation(ItemStack item) {
+                this.item = item.clone();
+            }
+            
+            public void prices(ItemStack... prices) {
+                this.prices = prices;
+            }
+            
+            public ItemStack[] prices() {
+                return this.prices;
+            }
+            
+            public boolean purchasable() {
+                return (this.prices != null && this.prices.length > 0);
+            }
+            
+            public List<String> getPurchaseText() {
+                
+                List<String> lines = new ArrayList<>();
+                
+                if (this.prices != null && this.prices.length > 0) {
+                    for (int i = 0; i < prices.length; i++) {
+                        int amount = prices[i].getAmount();     
+                        String name = Items.itemByStack(prices[i]).getName();
+                        String text = String.format(
+                              ChatColor.GREEN + "%s %s", amount, 
+                                Pluralize.apply(name, amount));
+                        if (i == 0) {
+                            text = ChatColor.GRAY + "Trade for " + text;
+                        }
+                        if (i < prices.length - 1) {
+                            text += ChatColor.GRAY + " or";
+                        }
+                        lines.add(text);
+                    }
+                }
+                else {
+                    lines.add(ChatColor.RED + "Not for sale");
+                }
+                
+                return lines;
+                                
+            }
+                        
+        }
         
 	public OwnedEntityShop(OwnedEntity owner) {
             
@@ -50,10 +103,6 @@ public class OwnedEntityShop {
                 
 	}
         
-        public void unprepare() {
-            
-        }
-        
         /**
          * Prepares the shop for vending items to a player.
          */
@@ -62,7 +111,9 @@ public class OwnedEntityShop {
             // Set item price metadata
 
             for (ItemStack item : this.getInventory().getContents()) {
-                if (item != null) {
+                if (item != null && item.getType() != Material.AIR) {
+                    
+                    ItemShopInformation info = this.getItemInformation(item);
                     
                     if (!item.hasItemMeta()) {
                         item.setItemMeta(Bukkit.getItemFactory().getItemMeta(item.getType()));
@@ -70,50 +121,54 @@ public class OwnedEntityShop {
                     
                     ItemMeta meta = item.getItemMeta();
                     
-                    String price = this.getPriceString(item);
-                    if (price == null) {
-                        price = "Not for sale";
-                    }
+                    meta.setLore(
+                            info.getPurchaseText()
+                    );
                     
-                    meta.setLore(Arrays.asList(price));
                     item.setItemMeta(meta);
                     
                 }
             }
         }
         
-        public String getPriceString(ItemStack item) {
+	private ItemShopInformation getItemInformation(final ItemStack item) {
             
-            final ItemStack price = this.getPurchasePrice(item);
+            List<ItemStack> prices = new ArrayList<>();
             
-            if (price != null) {                
-                return String.format("Buy for %s %s(s)", 
-                        price.getAmount(), Items.itemByStack(price).getName());
+            if (this.pricesChest == null) {
+                    return null;
             }
-            
-            return null;
+            else {
 
-        }
-	
-	public ItemStack getPurchasePrice(ItemStack item) {
-            
-		if (this.pricesChest == null) {
-			return null;
-		}
-		else {
-                    Inventory inventory = this.getPricesInventory();
-                    
+                Inventory inventory = this.getPricesInventory();
+                
+                int rows = 1;
+                if (inventory.getHolder() instanceof DoubleChest) {
+                    rows = 2;
+                }
+                
+                for (int row = 0; row < rows; row++) {
                     for (int i = 0; i < 9; i++) {
-                        ItemStack price = inventory.getItem(i);
-                        if (price != null) {
+                        int slot = (i + (row * 27));
+                        ItemStack price = inventory.getItem(slot);
+                        if (price != null && price.getType() != Material.AIR) {
                             if (price.getType() == item.getType() && price.getAmount() == item.getAmount()) {
-                                return inventory.getItem(i + 9).clone();
+                                ItemStack cost = inventory.getItem(slot + 9);
+                                if (cost != null && cost.getType() != Material.AIR) {
+                                    prices.add(cost.clone());
+                                }
                             }
                         }
                     }
-                    
-                    return null;
-		}
+                }
+
+            }
+            
+            ItemShopInformation info = new ItemShopInformation(item);
+            
+            info.prices(prices.toArray(new ItemStack[0]));
+            
+            return info;
                 
 	}
 	
@@ -148,18 +203,32 @@ public class OwnedEntityShop {
                 return false;
             }
             
-            // Check price.
+            // Ensure the item is for sale.
 
-            final ItemStack price = this.getPurchasePrice(item);
-            if (price == null) {
-                    this.owner.say(player, ChatColor.RED + "That item is not for sale.");
-                    return false;
+            final ItemShopInformation info = this.getItemInformation(item);
+            
+            if (!info.purchasable()) {
+                this.owner.say(player, ChatColor.RED + "That item is not for sale.");
+                return false;
             }
 
-            // Ensure player can afford the price and there are enough
-            // items in the shop inventory.
+            //  Determine what price, if any, the player can afford.
+
+            ItemStack priceAvailable = null;
             
-            if (affordable(player.getInventory(), price) && affordable(this.getInventory(), item)) {
+            for (ItemStack e : info.prices) {
+                if (affordable(player.getInventory(), e)) {
+                    priceAvailable = e;
+                    break;
+                }
+            }
+            
+            final ItemStack price = priceAvailable;
+            
+            // If the shop still has the item then sell it to
+            // the player.
+            
+            if (price != null && affordable(this.getInventory(), item)) {
 
                 // Strip the pricing information and remove metadata
                 // for non-specific blocks.

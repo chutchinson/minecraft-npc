@@ -112,13 +112,14 @@ public abstract class OwnedEntityRole {
                 if (player != null && player.getItemInHand().getTypeId() == Material.BLAZE_ROD.getId()) {
                     if (this.entity.selected() && this.entity.getOwner().equals(player.getName())) {
                         
-                        this.entity.remove();
+                        // Kill the entity.
+                        
+                        this.entity.getEntity().damage(
+                                this.entity.getEntity().getHealth() + 1);
                         
                         // TODO: Decouple this and consider removing from the role
                         // to the main plugin interface.
                         
-                        NpcPlugin.INSTANCE.getRepository().remove(this.entity.getId());
-
                         OwnedEntityItemFactory factory = new OwnedEntityItemFactory(
                                 NpcPlugin.INSTANCE.getRepository());
 

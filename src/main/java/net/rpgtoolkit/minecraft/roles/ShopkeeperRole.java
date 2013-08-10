@@ -11,7 +11,6 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Villager.Profession;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.inventory.InventoryAction;
@@ -50,8 +49,6 @@ public class ShopkeeperRole extends OwnedEntityRole {
     @Override
     protected void onInventoryInteraction(InventoryClickEvent event) {
 
-        final Inventory inventory = event.getInventory();
-        final InventoryHolder holder = inventory.getHolder();
         final ItemStack item = event.getCurrentItem();
         final Player player = (Player) event.getWhoClicked();
         
@@ -181,39 +178,45 @@ public class ShopkeeperRole extends OwnedEntityRole {
                 Chest chest = (Chest) event.getClickedBlock().getState();
                 if (chest != null) {
 
-                        if (Lockette.isProtected(block) && !Lockette.isOwner(block, event.getPlayer().getName())) {
-                            this.entity.say(player, "That chest is owned by somebody else.");
-                            return;
-                        }
+                    // Check if chest is protected.
 
-                        if (chest.equals(shop.getInventoryChest())) {
-                            shop.setInventoryChest(null);
-                            this.entity.say(player, "I will stop using that chest for my shop inventory.");
-                            return;
-                        }
-                        else if (chest.equals(shop.getPricesInventoryChest())) {
-                            shop.setPricesInventoryChest(null);
-                            this.entity.say(player, "I will stop using that chest for my shop pricing.");
-                            return;
-                        }
-                        else if (chest.equals(shop.getProfitChest())) {
-                            shop.setProfitInventoryChest(null);
-                            this.entity.say(player, "I will stop using that chest for my profit.");
-                            return;
-                        }
+                    if (Lockette.isProtected(block) && !Lockette.isOwner(block, event.getPlayer().getName())) {
+                        this.entity.say(player, "That chest is owned by somebody else.");
+                        return;
+                    }
 
-                        if (shop.getInventoryChest() == null) {
-                            shop.setInventoryChest(chest);
-                            this.entity.say(player, "I will use that chest for my shop inventory.");
-                        }
-                        else if (shop.getPricesInventoryChest() == null) {
-                            shop.setPricesInventoryChest(chest);
-                            this.entity.say(player, "I will use that chest for my shop pricing.");
-                        }
-                        else if (shop.getProfitChest() == null) {
-                            shop.setProfitInventoryChest(chest);
-                            this.entity.say(player, "I will use that chest for my profit.");
-                        }
+                    // If the chest is any of the configured chests then unconfigure it.
+                    
+                    if (chest.equals(shop.getInventoryChest())) {
+                        shop.setInventoryChest(null);
+                        this.entity.say(player, "I will stop using that chest for my shop inventory.");
+                        return;
+                    }
+                    else if (chest.equals(shop.getPricesInventoryChest())) {
+                        shop.setPricesInventoryChest(null);
+                        this.entity.say(player, "I will stop using that chest for my shop pricing.");
+                        return;
+                    }
+                    else if (chest.equals(shop.getProfitChest())) {
+                        shop.setProfitInventoryChest(null);
+                        this.entity.say(player, "I will stop using that chest for my profit.");
+                        return;
+                    }
+                    
+                    // Configure one of the unconfigured chests.
+
+                    if (shop.getInventoryChest() == null) {
+                        shop.setInventoryChest(chest);
+                        this.entity.say(player, "I will use that chest for my shop inventory.");
+                    }
+                    else if (shop.getPricesInventoryChest() == null) {
+                        shop.setPricesInventoryChest(chest);
+                        this.entity.say(player, "I will use that chest for my shop pricing.");
+                    }
+                    else if (shop.getProfitChest() == null) {
+                        shop.setProfitInventoryChest(chest);
+                        this.entity.say(player, "I will use that chest for my profit.");
+                    }
 
                 }
                 break;
@@ -250,7 +253,6 @@ public class ShopkeeperRole extends OwnedEntityRole {
         Player player = (Player) event.getPlayer();
 
         if (this.interacting(player)) {
-                this.shop.unprepare();
                 this.entity.say(player, "Thanks for shopping!");
                 this.stopInteracting(player);
         }

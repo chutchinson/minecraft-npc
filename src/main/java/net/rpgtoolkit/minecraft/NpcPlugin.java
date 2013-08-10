@@ -354,6 +354,7 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
 
         if (lastDamageEvent != null) {
             DamageCause cause = lastDamageEvent.getCause();
+  
             switch (cause) {
                 case BLOCK_EXPLOSION:
                     return "died from an explosion";
@@ -364,7 +365,7 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
                 case ENTITY_ATTACK:
                     return "died from blunt force";
                 case ENTITY_EXPLOSION:
-                    return "has been molested by a Creeper";
+                    return "was molested";
                 case FALL:
                     return "fell to their death";
                 case FALLING_BLOCK:
@@ -384,7 +385,7 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
                 case POISON:
                     return "died from poison";
                 case PROJECTILE:
-                    return "died by a projectile volley";
+                    return "took an arrow to the knee";
                 case STARVATION:
                     return "starved to death";
                 case SUICIDE:
@@ -392,11 +393,13 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
                 case VOID:
                     return "fell into the void";
                 case WITHER:
-                    return "withered out of existence";
+                    return "withered away";
+                case SUFFOCATION:
+                    return "suffocated";
             }
         }
 
-        return "has died!";
+        return "vanished";
 
     }
 }
