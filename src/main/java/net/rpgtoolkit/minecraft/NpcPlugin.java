@@ -64,7 +64,7 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
         } catch (IOException ex) {
             this.getLogger().log(Level.SEVERE, "Failed to load saved NPCs!", ex);
         }
-        
+
     }
 
     @Override
@@ -73,15 +73,15 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
         // Ensure entities are unbound from all loaded
         // chunks in order to persist all stored metadata
         // and properties
-        
+
         this.getLogger().log(Level.INFO, "Saving NPC metadata before shutdown...");
-        
+
         for (final World world : this.getServer().getWorlds()) {
             for (Chunk chunk : world.getLoadedChunks()) {
                 this.repository.unbind(chunk);
             }
         }
-        
+
         this.getLogger().log(Level.INFO, "Saved all metadata.");
 
         NpcPlugin.INSTANCE = null;
@@ -93,11 +93,11 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
 
         // Bind owned entities to all entities loaded in
         // the loaded chunk
-        
+
         if (!event.isNewChunk()) {
             this.repository.bind(event.getChunk());
         }
-        
+
     }
 
     @EventHandler
@@ -105,7 +105,7 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
 
         // Ensure that all owned entities in the unloaded
         // chunk get unbound and persisted
-        
+
         this.repository.unbind(event.getChunk());
 
     }

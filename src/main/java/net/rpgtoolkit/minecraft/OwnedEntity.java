@@ -9,7 +9,6 @@ import org.bukkit.entity.Ageable;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.metadata.FixedMetadataValue;
 
 public class OwnedEntity<T extends LivingEntity> {
 
@@ -74,7 +73,7 @@ public class OwnedEntity<T extends LivingEntity> {
 
         OwnedEntityPlayerMetadata playerMetadata =
                 new OwnedEntityPlayerMetadata(player);
-        
+
         if (value) {
             this.selected = true;
             this.entity.setCustomName(ChatColor.LIGHT_PURPLE + this.getName());

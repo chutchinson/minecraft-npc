@@ -39,7 +39,6 @@ public class ShopkeeperRole extends OwnedEntityRole {
         MESSAGE_PURCHASE("npc.shop.msg.purchase"),
         MESSAGE_OUTOFSTOCK("npc.shop.msg.outofstock"),
         MESSAGE_NOTAFFORDABLE("npc.shop.msg.notaffordable");
-        
         private String key;
 
         ConfigurationEntry(String key) {
@@ -206,14 +205,13 @@ public class ShopkeeperRole extends OwnedEntityRole {
 
             // TODO: Consider returning the "purchase result"
             // in order to supply better messages
-            
+
             if (shop.purchase(player, event.getRawSlot())) {
                 this.entity.say(player, this.config.get(
                         ConfigurationEntry.MESSAGE_PURCHASE,
                         "Thank you!"));
                 return;
-            }
-            else {
+            } else {
                 this.entity.say(player, ChatColor.RED + this.config.get(
                         ConfigurationEntry.MESSAGE_NOTAFFORDABLE,
                         "You cannot afford that."));

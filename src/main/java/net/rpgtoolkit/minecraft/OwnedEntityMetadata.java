@@ -9,6 +9,4 @@ package net.rpgtoolkit.minecraft;
  * @author Chris Hutchinson
  */
 public final class OwnedEntityMetadata {
-    
-    
 }

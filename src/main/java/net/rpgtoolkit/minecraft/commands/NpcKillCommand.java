@@ -6,7 +6,6 @@ package net.rpgtoolkit.minecraft.commands;
 
 import net.rpgtoolkit.minecraft.OwnedEntity;
 import net.rpgtoolkit.minecraft.OwnedEntityPlayerMetadata;
-import net.rpgtoolkit.minecraft.OwnedEntityRepository;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;

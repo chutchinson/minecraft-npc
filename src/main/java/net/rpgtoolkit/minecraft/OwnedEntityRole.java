@@ -84,7 +84,7 @@ public abstract class OwnedEntityRole {
 
         // Toggle the entity's selection state if they have the correct
         // item in their hand.
-        
+
         if (player.getItemInHand().getTypeId() == Material.BLAZE_ROD.getId()) {
 
             // If the player has another entity selected then cancel
@@ -95,7 +95,7 @@ public abstract class OwnedEntityRole {
                 this.entity.say(player, "You can only interact with one of us.");
                 return;
             }
-            
+
             // Toggle the entity's selection
 
             if (this.entity.isOwner(player)) {
@@ -105,7 +105,7 @@ public abstract class OwnedEntityRole {
             } else {
                 this.entity.say(player, "I don't recognize you.");
             }
-            
+
         }
 
         this.onAttack(event);

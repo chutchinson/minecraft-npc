@@ -142,21 +142,21 @@ public class OwnedEntityRepository {
     }
 
     public void bind(String key, LivingEntity npc) {
-        
+
         if (this.records.containsKey(key)) {
-            
+
             OwnedEntityRecord record = this.records.get(key);
             OwnedEntity entity = OwnedEntityFactory.attach(
                     record.getOwner(), record.getRole(), npc);
-            
+
             if (entity != null) {
-                
+
                 this.npcs.put(entity.getId(), entity);
-                
+
                 // Bind persisted data
-                
+
                 entity.setName(record.getName());
-                
+
                 // Bind all metadata
 
                 for (OwnedEntityMetadataRecord metadata
@@ -164,12 +164,12 @@ public class OwnedEntityRepository {
                     entity.getRole().getMetadata().put(
                             metadata.getKey(), metadata.getValue());
                 }
-                
+
                 entity.getRole().update();
-                                    
+
             }
         }
-        
+
     }
 
     public void unbind(Chunk chunk) {
@@ -213,5 +213,4 @@ public class OwnedEntityRepository {
                 .eq("reference", key)
                 .eq("role", role).findList();
     }
-
 }

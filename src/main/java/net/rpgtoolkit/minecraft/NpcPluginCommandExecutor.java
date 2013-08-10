@@ -15,31 +15,31 @@ import org.bukkit.command.CommandSender;
  *
  * @author Chris Hutchinson
  */
-public final class NpcPluginCommandExecutor 
-    implements CommandExecutor {
-    
+public final class NpcPluginCommandExecutor
+        implements CommandExecutor {
+
     private NpcPlugin plugin;
-    
+
     public NpcPluginCommandExecutor(final NpcPlugin plugin) {
         this.plugin = plugin;
     }
 
     @Override
     public boolean onCommand(CommandSender cs, Command cmnd, String name, String[] arguments) {
-        
+
         if (!name.equalsIgnoreCase("npc")) {
             return false;
         }
-       
+
         if (arguments.length < 1) {
             return false;
         }
-        
+
         final String commandName = arguments[0].trim().toLowerCase();
-        
+
         CommandExecutor executor = null;
-       
-        switch(commandName) {
+
+        switch (commandName) {
             case "infinite":
                 executor = new NpcShopInfiniteInventoryCommand();
                 break;
@@ -47,13 +47,12 @@ public final class NpcPluginCommandExecutor
                 executor = new NpcKillCommand();
                 break;
         }
-        
+
         if (executor != null) {
             return executor.onCommand(cs, cmnd, name, arguments);
         }
 
         return false;
-    
+
     }
-    
 }
