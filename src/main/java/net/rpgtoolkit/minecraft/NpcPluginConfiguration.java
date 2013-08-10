@@ -4,8 +4,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 public class NpcPluginConfiguration {
 
-	public static NpcPluginConfiguration load(YamlConfiguration config) {
-		return null;
-	}
+    public static NpcPluginConfiguration load(YamlConfiguration config) {
+            return null;
+    }
 	
 }

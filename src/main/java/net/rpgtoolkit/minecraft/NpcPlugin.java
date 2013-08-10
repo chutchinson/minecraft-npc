@@ -176,11 +176,13 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
             // Ensure player selection is reset.
 
             for (Player player : this.getServer().getOnlinePlayers()) {
-                if (player.hasMetadata(OwnedEntityMetadata.SELECTED)) {
-                    if (player.getMetadata(OwnedEntityMetadata.SELECTED).get(0).asString().equals(
-                            entity.getUniqueId().toString())) {
-                        player.removeMetadata(OwnedEntityMetadata.SELECTED, this);
-                    }
+                final OwnedEntityPlayerMetadata metadata = 
+                        new OwnedEntityPlayerMetadata(player);
+                
+                String selection = metadata.getSelection();
+                if (selection != null && selection.equals(
+                        entity.getUniqueId().toString())) {
+                    metadata.setSelection(null);
                 }
             }
         }
@@ -279,19 +281,18 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
         final ItemStack item = player.getItemInHand();
 
         if (item != null && item.getType().equals(Material.BLAZE_ROD)) {
+            
+            final OwnedEntityPlayerMetadata metadata = 
+                    new OwnedEntityPlayerMetadata(player);
+            
+            OwnedEntity entity = metadata.getSelectedEntity();
+            if (entity != null) {
+                entity.getRole().interactWithBlock(event);
 
-            if (player.hasMetadata(OwnedEntityMetadata.SELECTED)) {
-                List<MetadataValue> selected = player.getMetadata(OwnedEntityMetadata.SELECTED);
+                // TODO: Move out of plugin.
 
-                OwnedEntity entity = this.repository.get(selected.get(0).asString());
-                if (entity != null) {
-                    entity.getRole().interactWithBlock(event);
-                    
-                    // TODO: Move out of plugin.
-                    
-                    if (entity.getRole().dirty()) {
-                        this.repository.update(entity);
-                    }
+                if (entity.getRole().dirty()) {
+                    this.repository.update(entity);
                 }
             }
 

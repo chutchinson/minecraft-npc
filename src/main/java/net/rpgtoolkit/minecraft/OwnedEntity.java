@@ -3,6 +3,7 @@ package net.rpgtoolkit.minecraft;
 import de.ntcomputer.minecraft.controllablemobs.api.ControllableMob;
 import de.ntcomputer.minecraft.controllablemobs.api.ControllableMobs;
 import de.ntcomputer.minecraft.controllablemobs.api.ai.behaviors.AILookAtEntity;
+
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Ageable;
 import org.bukkit.entity.EntityType;
@@ -11,7 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 
 public class OwnedEntity<T extends LivingEntity> {
-
+    
     private String id;
     private String name;
     private String owner;

@@ -5,7 +5,8 @@
 package net.rpgtoolkit.minecraft;
 
 import net.rpgtoolkit.minecraft.commands.NpcKillCommand;
-import net.rpgtoolkit.minecraft.commands.ShopInfiniteInventoryCommand;
+import net.rpgtoolkit.minecraft.commands.NpcShopInfiniteInventoryCommand;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -40,12 +41,10 @@ public final class NpcPluginCommandExecutor
        
         switch(commandName) {
             case "infinite":
-                executor = new ShopInfiniteInventoryCommand(
-                       this.plugin.getRepository());
+                executor = new NpcShopInfiniteInventoryCommand();
                 break;
             case "kill":
-                executor = new NpcKillCommand(
-                        this.plugin.getRepository());
+                executor = new NpcKillCommand();
                 break;
         }
         

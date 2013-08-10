@@ -21,4 +21,5 @@ permissions:
     npc.infinite:
         description: Allows player to set an infinite inventory on a selected and owned NPC
         default: op
+     
  

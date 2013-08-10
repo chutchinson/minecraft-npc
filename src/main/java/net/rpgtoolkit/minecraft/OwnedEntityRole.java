@@ -177,10 +177,11 @@ public abstract class OwnedEntityRole {
             
             final Player owner = Bukkit.getPlayer(this.entity.getOwner());
             
-            if (owner != null && owner.hasMetadata(OwnedEntityMetadata.SELECTED)) {
-                String selection = owner.getMetadata(OwnedEntityMetadata.SELECTED).get(0).asString();
-                if (selection.equals(this.entity.getId())) {
-                    owner.removeMetadata(OwnedEntityMetadata.SELECTED, NpcPlugin.INSTANCE);
+            if (owner != null) {
+                final OwnedEntityPlayerMetadata metadata = 
+                        new OwnedEntityPlayerMetadata(owner);
+                if (this.entity.getId().equals(metadata.getSelection())) {
+                    metadata.setSelection(null);
                 }
             }
 

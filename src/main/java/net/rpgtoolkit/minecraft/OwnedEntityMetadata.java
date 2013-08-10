@@ -10,6 +10,5 @@ package net.rpgtoolkit.minecraft;
  */
 public final class OwnedEntityMetadata {
     
-    public static final String SELECTED = "npc.selected";
     
 }
