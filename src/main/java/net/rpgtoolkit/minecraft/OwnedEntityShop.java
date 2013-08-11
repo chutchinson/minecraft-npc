@@ -134,7 +134,8 @@ public class OwnedEntityShop {
 
         if (this.pricesChest == null) {
             return null;
-        } else {
+        } 
+        else {
 
             Inventory inventory = this.getPricesInventory();
 
@@ -151,7 +152,9 @@ public class OwnedEntityShop {
                         if (price.getType() == item.getType() && price.getAmount() == item.getAmount()) {
                             ItemStack cost = inventory.getItem(slot + 9);
                             if (cost != null && cost.getType() != Material.AIR) {
-                                prices.add(cost.clone());
+                                if (!prices.contains(cost)) {
+                                    prices.add(cost.clone());
+                                }
                             }
                         }
                     }
