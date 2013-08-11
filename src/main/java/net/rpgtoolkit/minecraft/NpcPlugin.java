@@ -13,6 +13,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
@@ -26,6 +27,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -109,6 +111,12 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
         this.repository.unbind(event.getChunk());
 
     }
+    
+    @EventHandler
+    public void onPotionLaunch(ProjectileLaunchEvent event) {
+        
+    
+    }
 
     @EventHandler
     public void onPotionSplash(PotionSplashEvent event) {
@@ -117,13 +125,14 @@ public final class NpcPlugin extends JavaPlugin implements Listener {
 
             final Player player = (Player) event.getEntity().getShooter();
             final ItemStack item = event.getEntity().getItem();
-
+            
             if (item.hasItemMeta() && this.creatorItemFactory.isCreatorItem(item)) {
 
                 if (!this.creatorItemFactory.isItemValid(item)) {
                     player.sendMessage(ChatColor.RED + "You must name your companion!");
-                    player.getWorld().dropItem(event.getEntity().getLocation(),
-                            item.clone());
+                    player.getWorld().dropItem(event.getEntity().getLocation(), 
+                            this.creatorItemFactory.clone(item));
+                    event.setCancelled(true);
                     return;
                 }
 

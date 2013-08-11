@@ -28,7 +28,20 @@ public final class OwnedEntityItemFactory {
         this.material = DEFAULT_MATERIAL;
 
     }
+    
+    public ItemStack clone(ItemStack item) {
+        
+        if (this.isCreatorItem(item)) {
+            EntityType type = EntityType.fromName(
+                    item.getItemMeta().getLore().get(1));
 
+            return this.getItem(type);
+        }
+        
+        return item.clone();
+        
+    }
+    
     public ItemStack getItem(EntityType entityType) {
 
         ItemStack item = new ItemStack(this.material, 1, (short) 16384);
