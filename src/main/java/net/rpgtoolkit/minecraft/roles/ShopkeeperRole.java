@@ -292,6 +292,7 @@ public class ShopkeeperRole extends OwnedEntityRole {
         OwnedEntityShop shop = this.getShop();
 
         switch (block.getType()) {
+            case TRAPPED_CHEST:
             case CHEST:
                 Chest chest = (Chest) event.getClickedBlock().getState();
                 if (chest != null) {
@@ -403,7 +404,8 @@ public class ShopkeeperRole extends OwnedEntityRole {
         if (chest != null) {
             Block block = this.entity.getEntity().getWorld()
                     .getBlockAt(chest.getLocation());
-            if (block.getType() == Material.CHEST) {
+            if (block.getType() == Material.CHEST
+                    || block.getType() == Material.TRAPPED_CHEST) {
                 return (Chest) block.getState();
             } else {
                 return null;

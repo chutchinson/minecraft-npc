@@ -207,6 +207,7 @@ public abstract class OwnedEntityRole {
 
     protected boolean isInteractableBlock(Block block) {
         switch (block.getType()) {
+            case TRAPPED_CHEST:
             case CHEST:
                 return true;
             default:

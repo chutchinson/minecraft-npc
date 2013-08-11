@@ -1,6 +1,6 @@
 name: tkzNPC
 main: net.rpgtoolkit.minecraft.NpcPlugin
-version: 1.3
+version: 1.4
 database: true
 depend: [ControllableMobsAPI, Lockette]
 commands:
