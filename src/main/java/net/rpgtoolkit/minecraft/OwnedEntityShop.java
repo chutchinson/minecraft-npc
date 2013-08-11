@@ -21,6 +21,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public class OwnedEntityShop {
@@ -467,13 +468,26 @@ public class OwnedEntityShop {
         return null;
 
     }
-
+    
     public static void removePricingInformation(ItemStack item) {
 
         ItemMeta meta = item.getItemMeta();
 
-        if (meta.hasDisplayName() || meta.hasEnchants()) {
-            meta.setLore(null);
+        // Items that have custom information, enchantments,
+        // lore, enchantment storage, or other special properties
+        // have to be considered differently when removing the 
+        // pricing metadata or it will break the items
+        
+        if (meta.hasDisplayName() || meta.hasEnchants() ||
+                meta.hasLore() || meta instanceof EnchantmentStorageMeta) {
+            int index = 0;
+            int count = meta.getLore().size();
+            for (index = 0; index < count; index++) {
+                if (meta.getLore().get(index).contains("Trade")) {
+                    break;
+                }
+            }
+            meta.setLore(meta.getLore().subList(0, index));
         } else {
             meta = null;
         }
