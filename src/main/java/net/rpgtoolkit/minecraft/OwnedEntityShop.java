@@ -113,16 +113,21 @@ public class OwnedEntityShop {
             if (item != null && item.getType() != Material.AIR) {
 
                 ItemShopInformation info = this.getItemInformation(item);
-
-                if (!item.hasItemMeta()) {
-                    item.setItemMeta(Bukkit.getItemFactory().getItemMeta(item.getType()));
-                }
-
                 ItemMeta meta = item.getItemMeta();
-
-                meta.setLore(
-                        info.getPurchaseText());
-
+                
+                if (!item.hasItemMeta()) {
+                    meta = Bukkit.getItemFactory().getItemMeta(item.getType());
+                }
+                
+                if (meta.hasLore()) {
+                    for (String line : info.getPurchaseText()) {
+                        meta.getLore().add(line);
+                    }
+                }
+                else {
+                    meta.setLore(info.getPurchaseText());
+                }
+                
                 item.setItemMeta(meta);
 
             }
@@ -474,12 +479,12 @@ public class OwnedEntityShop {
         ItemMeta meta = item.getItemMeta();
 
         // Items that have custom information, enchantments,
-        // lore, enchantment storage, or other special properties
+        // enchantment storage, or other special properties
         // have to be considered differently when removing the 
         // pricing metadata or it will break the items
         
         if (meta.hasDisplayName() || meta.hasEnchants() ||
-                meta.hasLore() || meta instanceof EnchantmentStorageMeta) {
+            meta instanceof EnchantmentStorageMeta) {
             int index = 0;
             int count = meta.getLore().size();
             for (index = 0; index < count; index++) {
